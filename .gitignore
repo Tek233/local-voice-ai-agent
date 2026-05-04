@@ -9,3 +9,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+fr_FR-upmc-medium.onnx
+
+fr_FR-upmc-medium.onnx.json
