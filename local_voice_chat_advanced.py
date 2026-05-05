@@ -9,18 +9,20 @@ from loguru import logger
 from ollama import chat
 from piper import PiperVoice
 
+from memory import ConversationMemory
+
 # -----------------------
 # Config
 # -----------------------
 TARGET_SR = 16000
 PIPER_SR = 22050
-
+memory = ConversationMemory()
 
 # -----------------------
 # Models
 # -----------------------
 whisper_model = WhisperModel(
-    "small",
+    "medium",
     compute_type="int8",
 )
 
@@ -140,16 +142,20 @@ SYSTEM_PROMPT = (
 
 def generate_response(transcript):
     try:
+        memory.add_user(transcript)
+
         response = chat(
             model="mistral:7b",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": transcript},
-            ],
+            messages=memory.get_messages(SYSTEM_PROMPT),
             options={"num_predict": 150},
         )
 
-        return response["message"]["content"].strip()
+        reply = response["message"]["content"].strip()
+
+        memory.add_assistant(reply)
+        memory.maybe_summarize()
+
+        return reply
 
     except Exception as e:
         logger.error(f"LLM error: {e}")
